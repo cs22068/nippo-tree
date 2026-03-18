@@ -642,6 +642,10 @@
       <input type="text" id="outlookEmail" placeholder="例: you@lab.ac.jp" style="width:180px; padding:6px 10px; background:rgba(255,255,255,0.1); border:1px solid var(--card-border); border-radius:8px; color:white; font-family:inherit; font-size:0.85rem;">
     </div>
     <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+      <label>🧪 テスト</label>
+      <button onclick="testMarkSent()" style="padding:8px 16px; background:rgba(255,155,181,0.2); border:1px solid rgba(255,155,181,0.4); color:var(--accent); border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.82rem;">🌸 今日の送信を記録する（テスト）</button>
+    </div>
+    <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
       <label>データをリセット</label>
       <button onclick="resetData()" style="padding:8px 16px; background:rgba(255,80,80,0.2); border:1px solid rgba(255,80,80,0.4); color:#ff6b6b; border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.82rem;">🗑️ リセット</button>
     </div>
@@ -1022,6 +1026,19 @@ function openOutlook() {
     window.open('https://outlook.office.com/', '_blank');
   }
   showToast('📧 Outlookを開きました！送信後に「✅ 送った！」を押してね');
+}
+
+function testMarkSent() {
+  const t = today();
+  if (!appData.sentDates.includes(t)) {
+    appData.sentDates.push(t);
+    saveData(appData);
+    showToast('🌸 テスト記録しました！木が育ちます！');
+    spawnPetals();
+    updateUI();
+  } else {
+    showToast('今日はすでに記録済みです！リセットしてからどうぞ');
+  }
 }
 
 function markSent() {
