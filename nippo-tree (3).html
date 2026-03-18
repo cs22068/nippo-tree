@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 日報の木</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Serif+JP:wght@300;400;700&display=swap');
+
+  :root {
+    --sky-top: #1a0a2e;
+    --sky-bottom: #2d1b4e;
+    --ground: #1a0f0a;
+    --trunk: #5c3a1e;
+    --bark: #3d2410;
+    --leaf-spring: #ffb7c5;
+    --leaf-summer: #2d8a3e;
+    --leaf-autumn: #e8652a;
+    --leaf-winter: #8ba5b0;
+    --petal: #ffd0de;
+    --text-main: #f5e6ff;
+    --text-sub: #c9aee0;
+    --accent: #ff9eb5;
+    --card-bg: rgba(255,255,255,0.05);
+    --card-border: rgba(255,182,193,0.2);
+    --btn-primary: linear-gradient(135deg, #ff6b9d, #c44f8a);
+    --btn-sent: linear-gradient(135deg, #4caf82, #2d7a58);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--sky-top);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* 星空背景 */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--d, 3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* メインレイアウト */
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ヘッダー */
+  .header {
+    text-align: center;
+    padding: 16px 0 8px;
+  }
+  .header h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff9eb5, #ffdb99, #ff9eb5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.1em;
+  }
+  .header .subtitle {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    margin-top: 4px;
+    letter-spacing: 0.15em;
+  }
+
+  /* 木のエリア */
+  .tree-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tree-stage-label {
+    font-size: 0.7rem;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .tree-canvas-wrap {
+    position: relative;
+    height: 240px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  #treeCanvas {
+    display: block;
+  }
+
+  /* キャラクターの吹き出し */
+  .speech-bubble {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    background: white;
+    color: #333;
+    border-radius: 16px 16px 16px 4px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    max-width: 180px;
+    line-height: 1.4;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    opacity: 0;
+    transform: translateY(6px) scale(0.95);
+    transition: opacity 0.4s, transform 0.4s;
+    pointer-events: none;
+  }
+  .speech-bubble.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 12px;
+    border: 8px solid transparent;
+    border-top-color: white;
+    border-bottom: 0;
+    border-left: 0;
+  }
+
+  /* 進捗バー */
+  .progress-section {
+    margin-top: 12px;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+  .progress-bar-bg {
+    background: rgba(255,255,255,0.1);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff6b9d, #ffb347);
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 20px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 999px;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+  .progress-count {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-sub);
+    margin-top: 6px;
+  }
+  .progress-count span {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  /* ステータスカード */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px;
+    backdrop-filter: blur(10px);
+    text-align: center;
+  }
+  .stat-card .label {
+    font-size: 0.68rem;
+    color: var(--text-sub);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .stat-card .value {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  .stat-card .unit {
+    font-size: 0.7rem;
+    color: var(--text-sub);
+    margin-left: 2px;
+  }
+
+  /* 今日のステータス */
+  .today-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  .today-title {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+  .today-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .today-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #666;
+    flex-shrink: 0;
+  }
+  .today-dot.sent { background: #4caf82; box-shadow: 0 0 8px #4caf82; }
+  .today-dot.pending { 
+    background: #ff9eb5; 
+    box-shadow: 0 0 8px #ff9eb5;
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+  }
+  .today-dot.notday { background: #444; }
+  .today-text { font-size: 0.9rem; font-weight: 700; }
+
+  /* ボタン */
+  .btn-outlook {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: var(--btn-primary);
+    color: white;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(255,107,157,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-outlook:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,107,157,0.5); }
+  .btn-outlook:active { transform: translateY(0); }
+
+  .btn-sent {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: var(--btn-sent);
+    color: white;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(76,175,130,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-sent:hover { transform: translateY(-2px); }
+
+  .btn-disabled {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-sub);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* 通知設定 */
+  .notify-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  .notify-title {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+  .notify-status {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notify-badge {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .notify-badge.on { background: rgba(76,175,130,0.2); color: #4caf82; border: 1px solid rgba(76,175,130,0.4); }
+  .notify-badge.off { background: rgba(255,107,107,0.2); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.4); }
+
+  .btn-notify {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-main);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-notify:hover { background: rgba(255,255,255,0.12); }
+
+  /* カレンダー */
+  .calendar-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 18px;
+    backdrop-filter: blur(10px);
+  }
+  .calendar-title {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-day-label {
+    text-align: center;
+    font-size: 0.6rem;
+    color: var(--text-sub);
+    padding: 2px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: default;
+  }
+  .cal-day.sent { background: rgba(255,155,181,0.25); color: var(--accent); }
+  .cal-day.missed { background: rgba(255,255,255,0.04); color: #555; }
+  .cal-day.today { border: 1px solid var(--accent); }
+  .cal-day.noday { background: transparent; color: #444; }
+  .cal-day.future { background: transparent; color: #444; }
+
+  /* 花びら */
+  .petal {
+    position: fixed;
+    pointer-events: none;
+    z-index: 999;
+    font-size: 1.2rem;
+    animation: petalFall linear forwards;
+  }
+  @keyframes petalFall {
+    0% { transform: translateY(-20px) rotate(0deg) translateX(0); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg) translateX(80px); opacity: 0; }
+  }
+
+  /* トースト */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: white;
+    color: #333;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 9999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* 設定モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1e1030;
+    border: 1px solid var(--card-border);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100px); }
+    to { transform: translateY(0); }
+  }
+  .modal h2 { font-size: 1rem; margin-bottom: 20px; color: var(--accent); }
+  .modal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-row label { font-size: 0.85rem; color: var(--text-sub); }
+  .modal-row input[type=number] {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: white;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.9rem;
+    width: 80px;
+    text-align: center;
+  }
+  .modal-close {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: var(--btn-primary);
+    color: white;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .settings-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    transition: background 0.2s;
+  }
+  .settings-btn:hover { background: rgba(255,255,255,0.12); }
+
+  .season-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255,155,181,0.2);
+    color: var(--accent);
+    border: 1px solid rgba(255,155,181,0.3);
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<button class="settings-btn" onclick="openSettings()" title="設定">⚙️</button>
+
+<div class="app">
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1>🌸 日報の木</h1>
+    <div class="subtitle">送るたびに、木が育つ</div>
+  </div>
+
+  <!-- 木 -->
+  <div class="tree-container">
+    <div class="tree-stage-label" id="stageLabel">新芽期</div>
+    <div class="tree-canvas-wrap">
+      <canvas id="treeCanvas" width="320" height="220"></canvas>
+      <div class="speech-bubble" id="speechBubble">日報まだー？🌸<br>早く送ってよ〜！</div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-labels">
+        <span>成長度</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-count">
+        通算 <span id="sentCount">0</span> / <span id="totalCount">156</span> 回送信
+      </div>
+    </div>
+  </div>
+
+  <!-- ステータス -->
+  <div class="status-grid">
+    <div class="stat-card">
+      <div class="label">🔥 連続送信</div>
+      <div class="value" id="streakValue">0</div><span class="unit">回</span>
+    </div>
+    <div class="stat-card">
+      <div class="label">📅 今年の達成率</div>
+      <div class="value" id="rateValue">0</div><span class="unit">%</span>
+    </div>
+  </div>
+
+  <!-- 今日のアクション -->
+  <div class="today-card">
+    <div class="today-title">TODAY'S REPORT</div>
+    <div class="today-status">
+      <div class="today-dot" id="todayDot"></div>
+      <div class="today-text" id="todayText">読み込み中...</div>
+    </div>
+    <div id="actionArea"></div>
+  </div>
+
+  <!-- 通知設定 -->
+  <div class="notify-card">
+    <div class="notify-title">🔔 リマインダー通知 (月・水・金 18:00)</div>
+    <div class="notify-status">
+      <span>ブラウザ通知</span>
+      <span class="notify-badge" id="notifyBadge">OFF</span>
+    </div>
+    <button class="btn-notify" onclick="toggleNotification()" id="notifyBtn">
+      🔔 通知を有効にする
+    </button>
+  </div>
+
+  <!-- 今月のカレンダー -->
+  <div class="calendar-card">
+    <div class="calendar-title" id="calTitle">今月の記録</div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<!-- 設定モーダル -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>⚙️ 設定</h2>
+    <div class="modal-row">
+      <label>目標送信回数（1年）</label>
+      <input type="number" id="targetInput" value="156" min="1" max="500">
+    </div>
+    <div class="modal-row">
+      <label>Outlookのメールアドレス</label>
+      <input type="text" id="outlookEmail" placeholder="例: you@lab.ac.jp" style="width:180px; padding:6px 10px; background:rgba(255,255,255,0.1); border:1px solid var(--card-border); border-radius:8px; color:white; font-family:inherit; font-size:0.85rem;">
+    </div>
+    <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+      <label>🧪 テスト</label>
+      <button onclick="testMarkSent()" style="padding:8px 16px; background:rgba(255,155,181,0.2); border:1px solid rgba(255,155,181,0.4); color:var(--accent); border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.82rem;">🌸 今日の送信を記録する（テスト）</button>
+    </div>
+    <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+      <label>データをリセット</label>
+      <button onclick="resetData()" style="padding:8px 16px; background:rgba(255,80,80,0.2); border:1px solid rgba(255,80,80,0.4); color:#ff6b6b; border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.82rem;">🗑️ リセット</button>
+    </div>
+    <button class="modal-close" onclick="closeSettings()">保存して閉じる</button>
+  </div>
+</div>
+
+<script>
+// ===== データ管理 =====
+const STORAGE_KEY = 'nippoTreeData_v1';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    sentDates: [],       // "YYYY-MM-DD" の配列
+    targetCount: 156,
+    outlookEmail: '',
+    notifyEnabled: false,
+  };
+}
+
+function saveData(d) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+
+let appData = loadData();
+
+// ===== 日付ユーティリティ =====
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isReportDay(dateStr) {
+  const d = new Date(dateStr);
+  const dow = d.getDay(); // 0=日, 1=月, 3=水, 5=金
+  return dow === 1 || dow === 3 || dow === 5;
+}
+
+function isWeekday135(d) {
+  const dow = d.getDay();
+  return dow === 1 || dow === 3 || dow === 5;
+}
+
+// 今年の月・水・金を数える
+function countReportDaysThisYear() {
+  const now = new Date();
+  const year = now.getFullYear();
+  let count = 0;
+  const d = new Date(year, 0, 1);
+  while (d.getFullYear() === year) {
+    if (isWeekday135(d)) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+// 今年の経過した月・水・金を数える
+function countElapsedReportDays() {
+  const now = new Date();
+  const year = now.getFullYear();
+  let count = 0;
+  const d = new Date(year, 0, 1);
+  while (d <= now) {
+    if (isWeekday135(d)) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+// ===== 星を生成 =====
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*60}%;
+      --d:${2+Math.random()*4}s;
+      --delay:${Math.random()*4}s;
+    `;
+    container.appendChild(s);
+  }
+}
+
+// ===== 木の描画 =====
+function drawTree(canvas, progress) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // 地面
+  const grad = ctx.createLinearGradient(0, H-30, 0, H);
+  grad.addColorStop(0, '#2a1f0a');
+  grad.addColorStop(1, '#1a0f05');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(W/2, H, W*0.7, 28, 0, Math.PI, 0);
+  ctx.fill();
+
+  // 草
+  for (let i = 0; i < 12; i++) {
+    const x = W*0.15 + (i/(11)) * W*0.7 + Math.sin(i*1.3)*6;
+    const h = 8 + Math.random()*8;
+    ctx.strokeStyle = `rgba(40,80,30,${0.3+Math.random()*0.4})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, H-20);
+    ctx.quadraticCurveTo(x + (Math.random()-0.5)*10, H-20-h*0.6, x+(Math.random()-0.5)*8, H-20-h);
+    ctx.stroke();
+  }
+
+  if (progress <= 0) {
+    // 種
+    ctx.fillStyle = '#8B5E3C';
+    ctx.beginPath();
+    ctx.ellipse(W/2, H-22, 6, 4, 0, 0, Math.PI*2);
+    ctx.fill();
+    return;
+  }
+
+  // トランクの高さ・太さ
+  const maxTrunkH = 130;
+  const maxTrunkW = 14;
+  const trunkH = Math.max(10, maxTrunkH * Math.min(progress * 2, 1));
+  const trunkW = Math.max(2, maxTrunkW * Math.min(progress * 2, 1));
+  const baseX = W/2, baseY = H-22;
+
+  // 幹
+  const trunkGrad = ctx.createLinearGradient(baseX-trunkW, 0, baseX+trunkW, 0);
+  trunkGrad.addColorStop(0, '#3d2410');
+  trunkGrad.addColorStop(0.4, '#7a4520');
+  trunkGrad.addColorStop(1, '#3d2410');
+  ctx.fillStyle = trunkGrad;
+  ctx.beginPath();
+  ctx.moveTo(baseX - trunkW*0.4, baseY);
+  ctx.bezierCurveTo(
+    baseX - trunkW*1.2, baseY - trunkH*0.3,
+    baseX - trunkW*0.8, baseY - trunkH*0.7,
+    baseX - trunkW*0.3, baseY - trunkH
+  );
+  ctx.lineTo(baseX + trunkW*0.3, baseY - trunkH);
+  ctx.bezierCurveTo(
+    baseX + trunkW*0.8, baseY - trunkH*0.7,
+    baseX + trunkW*1.2, baseY - trunkH*0.3,
+    baseX + trunkW*0.4, baseY
+  );
+  ctx.closePath();
+  ctx.fill();
+
+  if (progress < 0.15) return; // 新芽だけ
+
+  // 枝
+  const branchProgress = Math.min((progress - 0.1) / 0.9, 1);
+  const branchAlpha = Math.min(branchProgress * 2, 1);
+  
+  function drawBranch(x, y, angle, length, width, depth) {
+    if (depth <= 0 || length < 4) return;
+    const ex = x + Math.cos(angle) * length;
+    const ey = y + Math.sin(angle) * length;
+    ctx.strokeStyle = `rgba(90,50,20,${branchAlpha})`;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(
+      (x+ex)/2 + Math.sin(angle)*width*2, (y+ey)/2 + Math.cos(angle)*width*2,
+      ex, ey
+    );
+    ctx.stroke();
+    if (depth > 1) {
+      drawBranch(ex, ey, angle - 0.5 - Math.random()*0.2, length*0.65, width*0.65, depth-1);
+      drawBranch(ex, ey, angle + 0.4 + Math.random()*0.2, length*0.65, width*0.65, depth-1);
+    }
+  }
+
+  const topY = baseY - trunkH;
+  const branchLen = 30 + branchProgress * 40;
+  ctx.save();
+  drawBranch(baseX, topY, -Math.PI/2 - 0.4, branchLen, 4, 3);
+  drawBranch(baseX, topY, -Math.PI/2 + 0.4, branchLen, 4, 3);
+  drawBranch(baseX, topY + trunkH*0.25, -Math.PI/2 - 0.7, branchLen*0.7, 3, 2);
+  drawBranch(baseX, topY + trunkH*0.25, -Math.PI/2 + 0.7, branchLen*0.7, 3, 2);
+  ctx.restore();
+
+  if (progress < 0.2) return;
+
+  // 葉・花の密度
+  const leafProgress = Math.min((progress - 0.2) / 0.8, 1);
+  
+  // 現在の季節（現実の月に連動）
+  const month = new Date().getMonth(); // 0-11
+  let leafColor, isBloom;
+  if (month >= 2 && month <= 4) {
+    // 春: 桜色
+    leafColor = '#ffb7c5';
+    isBloom = true;
+  } else if (month >= 5 && month <= 8) {
+    // 夏: 緑
+    leafColor = '#3a9a50';
+    isBloom = false;
+  } else if (month >= 9 && month <= 10) {
+    // 秋: オレンジ
+    leafColor = '#e06020';
+    isBloom = false;
+  } else {
+    // 冬: 薄い
+    leafColor = '#a0b8c0';
+    isBloom = false;
+  }
+
+  // 葉っぱ / 花の塊
+  const clusters = [
+    { x: baseX, y: topY - 20, r: 35 + leafProgress*25 },
+    { x: baseX - 35, y: topY + 10, r: 22 + leafProgress*18 },
+    { x: baseX + 35, y: topY + 10, r: 22 + leafProgress*18 },
+    { x: baseX - 18, y: topY - 10, r: 20 + leafProgress*15 },
+    { x: baseX + 18, y: topY - 10, r: 20 + leafProgress*15 },
+  ];
+
+  clusters.forEach(c => {
+    ctx.globalAlpha = 0.7 * leafProgress;
+    const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+    g.addColorStop(0, leafColor);
+    g.addColorStop(0.7, leafColor + 'cc');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // 花びらの粒（春のみ）
+  if (isBloom && leafProgress > 0.3) {
+    for (let i = 0; i < 30 * leafProgress; i++) {
+      const cx = baseX + (Math.random()-0.5)*100;
+      const cy = topY + (Math.random()-0.5)*80;
+      const pr = 2 + Math.random()*3;
+      ctx.globalAlpha = 0.6 * leafProgress;
+      ctx.fillStyle = '#fff0f5';
+      ctx.beginPath();
+      // 5弁花
+      for (let p = 0; p < 5; p++) {
+        const a = (p/5)*Math.PI*2;
+        const px = cx + Math.cos(a)*pr*1.5;
+        const py = cy + Math.sin(a)*pr*1.5;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+// ===== ステージ情報 =====
+function getStageInfo(progress) {
+  if (progress === 0) return { label: '🌰 種', msg: '日報を送って芽吹かせよう！' };
+  if (progress < 0.1) return { label: '🌱 新芽', msg: '日報まだー？🌸 早く送ってよ〜！' };
+  if (progress < 0.3) return { label: '🌿 若木', msg: 'もっと送って！\nすくすく育ってるよ！' };
+  if (progress < 0.5) return { label: '🌳 中木', msg: '半分まできたね！\nこの調子で頑張れ〜！' };
+  if (progress < 0.75) return { label: '🌸 大木', msg: 'もうすぐ満開だ！\n日報も忘れずに！' };
+  if (progress < 1) return { label: '🌸 満開前夜', msg: 'あと少し！！\n日報送ったら完成だよ〜！' };
+  return { label: '🌸🌸 完全満開', msg: '完璧！！\n1年間お疲れ様でした🎉' };
+}
+
+// ===== UI更新 =====
+function updateUI() {
+  appData = loadData();
+  const totalTarget = appData.targetCount || 156;
+  const sentCount = appData.sentDates.length;
+  const progress = Math.min(sentCount / totalTarget, 1);
+
+  // 木を描画
+  const canvas = document.getElementById('treeCanvas');
+  drawTree(canvas, progress);
+
+  // ステージ
+  const stage = getStageInfo(progress);
+  document.getElementById('stageLabel').textContent = stage.label;
+  document.getElementById('progressPct').textContent = Math.round(progress*100) + '%';
+  document.getElementById('progressFill').style.width = (progress*100) + '%';
+  document.getElementById('sentCount').textContent = sentCount;
+  document.getElementById('totalCount').textContent = totalTarget;
+
+  // ストリーク計算
+  let streak = 0;
+  const sorted = [...appData.sentDates].sort().reverse();
+  const todayStr = today();
+  for (const d of sorted) {
+    if (d === todayStr || streak > 0) streak++;
+    else break;
+  }
+  // 実際の連続送信日（送信日が連続しているか）
+  streak = calcStreak(appData.sentDates);
+  document.getElementById('streakValue').textContent = streak;
+
+  // 達成率
+  const elapsed = countElapsedReportDays();
+  const rate = elapsed > 0 ? Math.round((sentCount / elapsed) * 100) : 0;
+  document.getElementById('rateValue').textContent = Math.min(rate, 100);
+
+  // 今日のステータス
+  const todayStr2 = today();
+  const todayIsReportDay = isReportDay(todayStr2);
+  const alreadySent = appData.sentDates.includes(todayStr2);
+  const dot = document.getElementById('todayDot');
+  const text = document.getElementById('todayText');
+  const area = document.getElementById('actionArea');
+
+  if (!todayIsReportDay) {
+    dot.className = 'today-dot notday';
+    text.textContent = '今日は送信日ではありません 😴';
+    area.innerHTML = `<button class="btn-disabled">📅 次回: 次の月・水・金</button>`;
+  } else if (alreadySent) {
+    dot.className = 'today-dot sent';
+    text.textContent = '今日の日報を送信済み ✅';
+    area.innerHTML = `<button class="btn-sent">🌸 送信済み！木が育ちました</button>`;
+  } else {
+    dot.className = 'today-dot pending';
+    text.textContent = '今日の日報がまだです！';
+    area.innerHTML = `
+      <button class="btn-outlook" onclick="openOutlook()">📧 Outlookで日報を送る</button>
+      <div style="height:8px"></div>
+      <button class="btn-sent" onclick="markSent()" style="background:rgba(255,255,255,0.1); box-shadow:none; border:1px solid var(--card-border);">✅ 送った！記録する</button>
+    `;
+    // 吹き出し表示
+    const bubble = document.getElementById('speechBubble');
+    bubble.textContent = stage.msg.replace('\\n', '\n');
+    bubble.innerHTML = stage.msg.replace(/\n/g, '<br>');
+    setTimeout(() => bubble.classList.add('show'), 300);
+  }
+
+  // 通知バッジ
+  const nb = document.getElementById('notifyBadge');
+  const nbtn = document.getElementById('notifyBtn');
+  if (appData.notifyEnabled && Notification.permission === 'granted') {
+    nb.textContent = 'ON'; nb.className = 'notify-badge on';
+    nbtn.textContent = '🔕 通知を無効にする';
+  } else {
+    nb.textContent = 'OFF'; nb.className = 'notify-badge off';
+    nbtn.textContent = '🔔 通知を有効にする';
+  }
+
+  // カレンダー
+  renderCalendar();
+}
+
+function calcStreak(dates) {
+  if (!dates.length) return 0;
+  const reportDates = dates.filter(d => isReportDay(d)).sort().reverse();
+  if (!reportDates.length) return 0;
+  let streak = 1;
+  for (let i = 1; i < reportDates.length; i++) {
+    const a = new Date(reportDates[i-1]);
+    const b = new Date(reportDates[i]);
+    const diff = (a - b) / (1000*60*60*24);
+    if (diff <= 7) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ===== Outlook =====
+function openOutlook() {
+  const email = appData.outlookEmail;
+  if (email) {
+    window.open(`https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(email)}&subject=${encodeURIComponent('日報 ' + today())}`, '_blank');
+  } else {
+    window.open('https://outlook.office.com/', '_blank');
+  }
+  showToast('📧 Outlookを開きました！送信後に「✅ 送った！」を押してね');
+}
+
+function testMarkSent() {
+  const t = today();
+  if (!appData.sentDates.includes(t)) {
+    appData.sentDates.push(t);
+    saveData(appData);
+    showToast('🌸 テスト記録しました！木が育ちます！');
+    spawnPetals();
+    updateUI();
+  } else {
+    showToast('今日はすでに記録済みです！リセットしてからどうぞ');
+  }
+}
+
+function markSent() {
+  const t = today();
+  if (!appData.sentDates.includes(t)) {
+    appData.sentDates.push(t);
+    saveData(appData);
+    showToast('🌸 日報を記録しました！木が育ちます！');
+    spawnPetals();
+    document.getElementById('speechBubble').classList.remove('show');
+    updateUI();
+  }
+}
+
+// ===== 花びら =====
+function spawnPetals() {
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'petal';
+      p.textContent = ['🌸','🌺','🌼','✿','❀'][Math.floor(Math.random()*5)];
+      p.style.left = Math.random()*100 + 'vw';
+      p.style.animationDuration = (1.5 + Math.random()*2) + 's';
+      p.style.fontSize = (0.8 + Math.random()*1.2) + 'rem';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3500);
+    }, i*80);
+  }
+}
+
+// ===== トースト =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== 通知 =====
+async function toggleNotification() {
+  if (appData.notifyEnabled) {
+    appData.notifyEnabled = false;
+    saveData(appData);
+    updateUI();
+    showToast('🔕 通知を無効にしました');
+    return;
+  }
+  if (!('Notification' in window)) {
+    showToast('❌ このブラウザは通知非対応です');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    appData.notifyEnabled = true;
+    saveData(appData);
+    scheduleNotifications();
+    updateUI();
+    showToast('🔔 通知を有効にしました！月・水・金 18:00にお知らせします');
+    new Notification('🌸 日報の木', { body: 'テスト通知です！設定完了 🌸', icon: '' });
+  } else {
+    showToast('❌ 通知の許可が必要です');
+  }
+}
+
+function scheduleNotifications() {
+  // Service Workerなしでの簡易スケジューリング
+  function checkAndNotify() {
+    if (!appData.notifyEnabled || Notification.permission !== 'granted') return;
+    const now = new Date();
+    const dow = now.getDay();
+    const h = now.getHours(), m = now.getMinutes();
+    if ((dow===1||dow===3||dow===5) && h===18 && m===0) {
+      const t = today();
+      if (!appData.sentDates.includes(t)) {
+        const msgs = [
+          '日報まだー？🌸 木が待ってるよ！',
+          'ねえねえ、日報送った？🌳 枝が伸びるの待ってるよ〜',
+          '18時だよ！日報の時間！🌸',
+          '送ってないと木が枯れちゃう…（嘘）でも早く送って！',
+        ];
+        new Notification('🌸 日報の木', {
+          body: msgs[Math.floor(Math.random()*msgs.length)],
+        });
+      }
+    }
+  }
+  setInterval(checkAndNotify, 60000); // 毎分チェック
+  checkAndNotify();
+}
+
+// ===== カレンダー =====
+function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('calTitle').textContent = `${year}年 ${monthNames[month]} の記録`;
+
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  const dayLabels = ['日','月','火','水','木','金','土'];
+  dayLabels.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'cal-day-label';
+    el.textContent = l;
+    if (l==='月'||l==='水'||l==='金') el.style.color = 'var(--accent)';
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    grid.appendChild(el);
+  }
+
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = today();
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateObj = new Date(dateStr);
+    const isReport = isReportDay(dateStr);
+    const isSent = appData.sentDates.includes(dateStr);
+    const isToday2 = dateStr === todayStr;
+    const isFuture = dateObj > new Date();
+
+    const el = document.createElement('div');
+    el.textContent = d;
+
+    if (!isReport) {
+      el.className = 'cal-day noday';
+    } else if (isFuture) {
+      el.className = 'cal-day future';
+      el.style.color = '#ff9eb566';
+    } else if (isSent) {
+      el.className = 'cal-day sent';
+      el.textContent = '🌸';
+    } else {
+      el.className = 'cal-day missed';
+      el.style.color = '#ff6b6b88';
+    }
+    if (isToday2) el.style.border = '1.5px solid var(--accent)';
+    grid.appendChild(el);
+  }
+}
+
+// ===== 設定 =====
+function openSettings() {
+  document.getElementById('targetInput').value = appData.targetCount || 156;
+  document.getElementById('outlookEmail').value = appData.outlookEmail || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeSettings() {
+  const t = parseInt(document.getElementById('targetInput').value) || 156;
+  appData.targetCount = t;
+  appData.outlookEmail = document.getElementById('outlookEmail').value.trim();
+  saveData(appData);
+  document.getElementById('modalOverlay').classList.remove('open');
+  updateUI();
+  showToast('✅ 設定を保存しました');
+}
+function resetData() {
+  if (confirm('全データをリセットしますか？')) {
+    localStorage.removeItem(STORAGE_KEY);
+    appData = loadData();
+    document.getElementById('modalOverlay').classList.remove('open');
+    updateUI();
+    showToast('🗑️ リセットしました');
+  }
+}
+
+// ===== 初期化 =====
+createStars();
+updateUI();
+if (appData.notifyEnabled) scheduleNotifications();
+
+// 1分ごとにUIリフレッシュ（通知チェックのため）
+setInterval(updateUI, 60000);
+</script>
+</body>
+</html>
