@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌸 日報の木</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<!-- 右上アイコン -->
+<span id="testModeBadge">テストモードON</span>
+<button class="icon-btn" id="notifyBtn"   onclick="toggleNotification()" title="通知OFF（クリックで有効化）">🔕</button>
+<button class="icon-btn" id="settingsBtn" onclick="openSettings()"       title="設定">⚙️</button>
+
+<div class="app">
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <h1>🌸 日報の木</h1>
+    <p class="subtitle">送るたびに、木が育つ</p>
+  </header>
+
+  <!-- 木エリア -->
+  <section class="tree-container">
+    <div class="tree-stage-label" id="stageLabel">種</div>
+    <div class="tree-canvas-wrap">
+      <canvas id="treeCanvas" width="320" height="220"></canvas>
+      <div class="speech-bubble" id="speechBubble"></div>
+    </div>
+    <div class="progress-section">
+      <div class="progress-labels">
+        <span>成長度</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <p class="progress-count">
+        通算 <span id="sentCount">0</span> / <span id="totalCount">156</span> 回送信
+      </p>
+    </div>
+  </section>
+
+  <!-- ステータス -->
+  <div class="status-grid">
+    <div class="stat-card">
+      <div class="label">📅 今月の送信</div>
+      <div class="value" id="streakValue">0</div><span class="unit">回</span>
+    </div>
+    <div class="stat-card">
+      <div class="label">📅 今年の達成率</div>
+      <div class="value" id="rateValue">0</div><span class="unit">%</span>
+    </div>
+  </div>
+
+  <!-- TODAY'S REPORT -->
+  <section class="today-card">
+    <div class="today-title">TODAY'S REPORT</div>
+    <div class="today-status">
+      <div class="today-dot" id="todayDot"></div>
+      <div class="today-text" id="todayText">読み込み中...</div>
+    </div>
+    <div id="actionArea"></div>
+  </section>
+
+  <!-- カレンダー -->
+  <section class="calendar-card">
+    <div class="calendar-title" id="calTitle">今月の記録</div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </section>
+
+</div><!-- /.app -->
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<!-- 設定モーダル -->
+<div class="modal-overlay" id="modalOverlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙️ 設定</h2>
+      <button class="modal-close-btn" onclick="cancelSettings()">✕</button>
+    </div>
+
+    <!-- 目標回数 -->
+    <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+      <label>目標送信回数（年度自動計算）</label>
+      <p class="modal-info" id="targetInfo">計算中...</p>
+    </div>
+
+    <!-- Outlook -->
+    <div class="modal-row">
+      <label>Outlookのメールアドレス</label>
+      <input class="modal-input" type="text" id="outlookEmail" placeholder="例: you@lab.ac.jp">
+    </div>
+
+    <!-- テストモード -->
+    <div class="modal-row toggle-row">
+      <div>
+        <label>テストモード</label>
+        <p class="modal-sub">ONにすると押すたびに記録が増える</p>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- リセット -->
+    <div class="modal-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+      <label>データをリセット</label>
+      <div id="resetArea">
+        <button onclick="confirmReset()"
+          style="padding:8px 16px; background:rgba(220,50,50,0.1); border:1px solid rgba(220,50,50,0.4); color:#c00; border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.88rem; font-weight:600;">
+          🗑️ リセット
+        </button>
+      </div>
+      <div class="reset-confirm" id="resetConfirm">
+        <p>⚠️ 本当にリセットしますか？<br>全ての記録が消えます。</p>
+        <div class="reset-btn-row">
+          <button class="btn-reset-confirm" onclick="doReset()">🗑️ リセットする</button>
+          <button class="btn-reset-cancel"  onclick="cancelReset()">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="modal-save-btn" onclick="closeSettings()">保存して閉じる</button>
+  </div>
+</div>
+
+<!-- JavaScript（依存順に読み込む） -->
+<script src="js/storage.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/notification.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
